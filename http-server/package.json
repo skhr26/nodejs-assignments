@@ -7,13 +7,16 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "npx jest tests/server.test.js"
-  },
+  "start": "node server.js",
+  "test": "concurrently -k -s first \"node server.js\" \"wait-on http://localhost:8080 && npx jest tests/server.test.js\""
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "jest": "^30.2.0"
+    "concurrently": "^10.0.3",
+    "jest": "^30.2.0",
+    "wait-on": "^9.0.10"
   }
 }
