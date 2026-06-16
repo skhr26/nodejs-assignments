@@ -41,9 +41,115 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
+  const fs=require("fs");
   
   const app = express();
   
   app.use(bodyParser.json());
+
+
+  function findEle(arr,id) {
+    for (let i = 0; i < arr.length; i++) {
+      if(arr[i].id==id) {
+        return i;
+      }      
+    }
+    return -1;
+  }
+
+  function deleteEle(arr,id) {
+    const newArr=[];
+    for (let i = 0; i < arr.length; i++) {
+      if(arr[i].id!=id) {
+        newArr.push(arr[i]);
+      }      
+    }
+    return newArr;
+  }
+
+  app.get('/todos',function(req,res) {
+    fs.readFile("todos.json","utf8",function (err,data) {
+      if(err) throw err;
+        // data may be in the form of string so we need to change it the form of json
+        // that is what we did 
+        res.status(200).json(JSON.parse(data));
+    })
+  })
+
+
+  app.get('/todos/:id',(req,res)=>{
+    fs.readFile("todos.json","utf-8",function(err,data) {
+      if(err) throw err;
+      const id=parseInt(req.params.id);
+      const todo=JSON.parse(data);
+      const idx=findEle(todo,id);
+      if(idx===-1) return res.status(404).send();
+      
+      res.status(200).json(todo[idx]);
+    })    
+  })
+
+  app.post("/todos",function(req,res) {
+    const newTodo={
+        id:Math.floor(Math.random()*1000000),
+        title:req.body.title,
+        description:req.body.description,
+    }
+
+    fs.readFile("todos.json","utf-8",(err,data)=> {
+      if(err) throw err;
+      let todo=JSON.parse(data);
+      todo.push(newTodo);
+      fs.writeFile("todos.json",JSON.stringify(todo),(err) => {
+        if(err) throw err;
+        res.status(201).send(newTodo);            
+      })
+    })
+  })
+
+  app.put("/todos/:id",(req,res) => {
+    fs.readFile("todos.json","utf-8",(err,data)=>{
+      if(err) throw err;
+      let todo=JSON.parse(data);
+      const id=parseInt(req.params.id);
+      const todoIdx=findEle(todo,id);
+      if(todoIdx===-1) return res.status(404).send();
+      const updatedTodo={
+        id:id,
+        title:req.body.title,
+        description:req.body.description,
+      }
+      todo[todoIdx]=updatedTodo;
+      fs.writeFile("todos.json",JSON.stringify(todo),(err) => {
+        if(err) throw err;
+        res.status(200).send(updatedTodo);            
+      });
+    });
+  });
+
+  app.delete("/todos/:id",(req,res) => {
+    fs.readFile("todos.json","utf-8",(err,data)=>{
+      if(err) throw err;
+      let todo=JSON.parse(data);
+      const id=parseInt(req.params.id);
+      const todoIdx=findEle(todo,id);
+      if(todoIdx===-1) return res.status(404).send();
+
+      todo=deleteEle(todo,id);
+      fs.writeFile("todos.json",JSON.stringify(todo),(err) => {
+        if(err) throw err;
+        res.status(200).send();            
+      });
+    });
+  })
+
+
+  app.use((req,res)=> {
+    res.status(404).send();
+  })
+
+
+
+
   
   module.exports = app;

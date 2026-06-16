@@ -30,77 +30,74 @@
  */
 
   const express = require("express")
+  const jwt=require("jsonwebtoken")
   const PORT = 3000;
   const app = express();
   // write your logic here, DONT WRITE app.listen(3000) when you're running tests, the tests will automatically start the server
   
-  var users = [];
-  
+  var users=[];
+  let id=1;
+
   app.use(express.json());
-  app.post("/signup", (req, res) => {
-    var user = req.body;
-    let userAlreadyExists = false;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === user.email) {
-          userAlreadyExists = true;
-          break;
-      }
+
+  app.post('/signup',function(req,res) {
+    const {email, password,firstName ,lastName}=req.body;
+    const userExist=users.find(user=>user.email===email&&user.password===password);
+    if(userExist) {
+      res.status(400).json({
+        error:"user already exist",
+      })
+      return ;
     }
-    if (userAlreadyExists) {
-      res.sendStatus(400);
-    } else {
-      users.push(user);
-      res.status(201).send("Signup successful");
+
+    users.push({
+      id:id++,
+      email,
+      password,
+      firstName,
+      lastName
+    })
+
+    res.status(201).send("Signup successful");
+  })
+
+  app.post('/login',function(req,res) {
+    const {email,password}=req.body;
+    const userExist=users.find(user=>user.email===email&&user.password===password);
+    if(!userExist) {
+      return res.status(401).send("credentials are invalid");
     }
-  });
-  
-  app.post("/login", (req, res) => {
-    var user = req.body;
-    let userFound = null;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === user.email && users[i].password === user.password) {
-          userFound = users[i];
-          break;
-      }
+    const id=userExist.id;
+    const firstName=userExist.firstName;
+    const lastName=userExist.lastName;
+
+    const token=jwt.sign({
+      id
+    },"shikhar123")
+
+    res.status(200).json({
+      email,
+      firstName,
+      lastName,
+      authToken:token,
+    })
+  })
+
+  app.get('/data',function(req,res) {
+    const email=req.headers.email;
+    const password=req.headers.password;
+
+    const userExist=users.find(user=>user.email===email&&user.password===password);
+
+    if(!userExist) {
+        return res.status(401).send("Unauthorized");
     }
-  
-    if (userFound) {
-      res.json({
-          firstName: userFound.firstName,
-          lastName: userFound.lastName,
-          email: userFound.email
-      });
-    } else {
-      res.sendStatus(401);
-    }
-  });
-  
-  app.get("/data", (req, res) => {
-    var email = req.headers.email;
-    var password = req.headers.password;
-    let userFound = false;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === email && users[i].password === password) {
-          userFound = true;
-          break;
-      }
-    }
-  
-    if (userFound) {
-      let usersToReturn = [];
-      for (let i = 0; i<users.length; i++) {
-          usersToReturn.push({
-              firstName: users[i].firstName,
-              lastName: users[i].lastName,
-              email: users[i].email
-          });
-      }
-      res.json({
-          users
-      });
-    } else {
-      res.sendStatus(401);
-    }
-  });
+
+    res.status(200).json({
+      users
+    })
+  })
+
+
   
   module.exports = app;
