@@ -16,7 +16,6 @@ app.use((req, res, next) => {
   }
 
   const currentTime = Math.floor(Date.now() / 1000); // Current second timestamp
-
   // Initialize user data if not already present
   if (!numberOfRequestsForUser[userId]) {
     numberOfRequestsForUser[userId] = { count: 0, lastRequestTime: currentTime };

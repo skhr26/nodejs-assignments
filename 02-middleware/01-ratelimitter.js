@@ -12,6 +12,35 @@ const app = express();
 // clears every one second
 
 let numberOfRequestsForUser = {};
+
+app.use((req,res,next)=> {
+  const id=req.header(user-id);
+
+  if(!id) {
+    return res.status(400).json({error:"id is invalid"});
+  }
+    
+  const curTime=Math.floor(Date.now()/1000);
+  if(!numberOfRequestsForUser[id]) {
+    numberOfRequestsForUser[id]={count:0,requestTime:curTime};
+  }
+
+  if(curTime===numberOfRequestsForUser[id].requestTime) {
+    numberOfRequestsForUser[id].count++;
+  }
+  else {
+    numberOfRequestsForUser[id].count=1;
+    numberOfRequestsForUser[id].requestTime=curTime;
+  }
+
+  if (userData.count > 5) {
+    // rate limit kar diya hai
+    return res.status(404).json({ error: 'Too many requests' });
+  }
+
+  next();
+
+})
 setInterval(() => {
     numberOfRequestsForUser = {};
 }, 1000)
